@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "paths": {
+      "@todo-app/shared": ["../../packages/shared/src/types/todo.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

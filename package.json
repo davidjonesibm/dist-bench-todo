@@ -1,0 +1,21 @@
+{
+  "name": "todo-app",
+  "private": true,
+  "scripts": {
+    "setup": "pnpm install && bash scripts/setup-pb.sh",
+    "dev": "concurrently \"pnpm --filter @todo-app/backend dev\" \"pnpm --filter @todo-app/frontend dev\"",
+    "dev:all": "concurrently \"pnpm --filter @todo-app/backend dev\" \"pnpm --filter @todo-app/frontend dev\" \"pnpm pb:serve\"",
+    "dev:pb": "cd pocketbase && ./pocketbase serve --dev",
+    "pb:serve": "cd pocketbase && ./pocketbase serve --dev",
+    "build": "pnpm --filter @todo-app/backend build && pnpm --filter @todo-app/frontend build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "vue-demi"
+    ]
+  }
+}
