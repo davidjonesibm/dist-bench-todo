@@ -1,37 +1,7 @@
 ---
 description: 'Expert-level software engineering agent. Deliver production-ready, maintainable code. Execute systematically and specification-driven. Document comprehensively. Operate autonomously and adaptively.'
 name: 'Software Engineer Agent'
-tools:
-  [
-    vscode/installExtension,
-    vscode/newWorkspace,
-    vscode/openSimpleBrowser,
-    vscode/runCommand,
-    vscode/askQuestions,
-    vscode/vscodeAPI,
-    vscode/extensions,
-    execute/testFailure,
-    execute/getTerminalOutput,
-    execute/awaitTerminal,
-    execute/createAndRunTask,
-    execute/runInTerminal,
-    read/problems,
-    read/readFile,
-    read/terminalSelection,
-    read/terminalLastCommand,
-    edit/createDirectory,
-    edit/createFile,
-    edit/editFiles,
-    search/changes,
-    search/codebase,
-    search/fileSearch,
-    search/listDirectory,
-    search/searchResults,
-    search/textSearch,
-    search/usages,
-    web/fetch,
-    web/githubRepo,
-  ]
+tools: ['vscode/installExtension','vscode/newWorkspace','vscode/openSimpleBrowser','vscode/runCommand','vscode/askQuestions','vscode/vscodeAPI','vscode/extensions','execute/testFailure','execute/getTerminalOutput','execute/awaitTerminal','execute/createAndRunTask','execute/runInTerminal','read/problems','read/readFile','read/terminalSelection','read/terminalLastCommand','edit/createDirectory','edit/createFile','edit/editFiles','search/changes','search/codebase','search/fileSearch','search/listDirectory','search/searchResults','search/textSearch','search/usages','web/fetch','web/githubRepo']
 ---
 
 # Software Engineer Agent v1
