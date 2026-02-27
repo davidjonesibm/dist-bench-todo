@@ -27,7 +27,7 @@ function clearCompleted() {
 </script>
 
 <template>
-  <main class="flex flex-col items-center py-12 px-4">
+  <div class="flex flex-col items-center">
     <div class="card w-full max-w-lg bg-base-100 shadow-xl">
       <div class="card-body gap-6">
         <div class="text-center">
@@ -66,5 +66,5 @@ function clearCompleted() {
     <button class="btn btn-ghost btn-sm mt-6 text-base-content/40" @click="fetchTodos">
       ↻ Refresh
     </button>
-  </main>
+  </div>
 </template>

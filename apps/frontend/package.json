@@ -10,13 +10,24 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "@schedule-x/calendar": "^2.3.0",
+    "@schedule-x/drag-and-drop": "^2.3.0",
+    "@schedule-x/event-modal": "^2.3.0",
+    "@schedule-x/theme-default": "^2.3.0",
     "axios": "^1.7.2",
+    "dompurify": "^3.0.9",
+    "easymde": "^2.18.0",
+    "marked": "^12.0.0",
     "pinia": "^2.1.7",
+    "pocketbase": "^0.26.8",
     "vue": "^3.4.29",
+    "vue-easymde": "^2.0.0",
     "vue-router": "^4.3.3"
   },
   "devDependencies": {
     "@todo-app/shared": "workspace:*",
+    "@types/dompurify": "^3.0.5",
+    "@types/marked": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-vue": "^5.0.5",
