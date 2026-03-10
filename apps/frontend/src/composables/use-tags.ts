@@ -1,5 +1,6 @@
-import { ref, onUnmounted, computed } from 'vue'
-import { pb } from '../lib/pocketbase'
+import { ref, computed } from 'vue'
+import { apiFetch } from '../lib/api'
+import { usePageRefetch } from './use-page-refetch'
 import type {
   Tag,
   CreateTagData,
@@ -13,8 +14,6 @@ export function useTags() {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  let unsubscribe: (() => void) | null = null
-
   /**
    * Fetch all tags for the current user
    */
@@ -23,11 +22,7 @@ export function useTags() {
     error.value = null
 
     try {
-      const records = await pb.collection('tags').getFullList<Tag>({
-        sort: 'name',
-        filter: `userId = "${pb.authStore.model?.id}"`,
-      })
-
+      const records = await apiFetch<Tag[]>('/api/tags')
       tags.value = records
       return { success: true, data: records }
     } catch (err: any) {
@@ -48,10 +43,9 @@ export function useTags() {
     error.value = null
 
     try {
-      const record = await pb.collection('tags').create<Tag>({
-        name,
-        color,
-        userId: pb.authStore.model?.id,
+      const record = await apiFetch<Tag>('/api/tags', {
+        method: 'POST',
+        body: JSON.stringify({ name, color }),
       })
 
       tags.value.push(record)
@@ -77,7 +71,10 @@ export function useTags() {
     error.value = null
 
     try {
-      const record = await pb.collection('tags').update<Tag>(id, data)
+      const record = await apiFetch<Tag>(`/api/tags/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      })
 
       const index = tags.value.findIndex((t) => t.id === id)
       if (index !== -1) {
@@ -105,7 +102,7 @@ export function useTags() {
     error.value = null
 
     try {
-      await pb.collection('tags').delete(id)
+      await apiFetch<void>(`/api/tags/${id}`, { method: 'DELETE' })
 
       tags.value = tags.value.filter((t) => t.id !== id)
       return { success: true }
@@ -126,53 +123,7 @@ export function useTags() {
     return tags.value.find((t) => t.id === id)
   })
 
-  /**
-   * Subscribe to real-time tag updates
-   */
-  async function subscribeToTags() {
-    if (!pb.authStore.model?.id) {
-      console.warn('Cannot subscribe to tags: user not authenticated')
-      return
-    }
-
-    unsubscribe = await pb.collection('tags').subscribe<Tag>('*', (e) => {
-      // Only process tags for the current user
-      if (e.record?.userId !== pb.authStore.model?.id) {
-        return
-      }
-
-      if (e.action === 'create') {
-        const exists = tags.value.some((tag) => tag.id === e.record.id)
-        if (!exists) {
-          tags.value.push(e.record)
-          tags.value.sort((a, b) => a.name.localeCompare(b.name))
-        }
-      } else if (e.action === 'update') {
-        const index = tags.value.findIndex((tag) => tag.id === e.record.id)
-        if (index !== -1) {
-          tags.value[index] = e.record
-          tags.value.sort((a, b) => a.name.localeCompare(b.name))
-        }
-      } else if (e.action === 'delete') {
-        tags.value = tags.value.filter((tag) => tag.id !== e.record.id)
-      }
-    })
-  }
-
-  /**
-   * Unsubscribe from real-time updates
-   */
-  function unsubscribeFromTags() {
-    if (unsubscribe) {
-      unsubscribe()
-      unsubscribe = null
-    }
-  }
-
-  // Cleanup on unmount
-  onUnmounted(() => {
-    unsubscribeFromTags()
-  })
+  usePageRefetch(fetchTags)
 
   return {
     tags,
@@ -183,7 +134,5 @@ export function useTags() {
     updateTag,
     deleteTag,
     getTagById,
-    subscribeToTags,
-    unsubscribeFromTags,
   }
 }

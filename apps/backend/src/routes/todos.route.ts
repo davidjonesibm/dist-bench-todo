@@ -1,65 +1,40 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { createTodoSchema, updateTodoSchema } from '../schemas/todo.schema.js';
-import type { CreateTodoDto, UpdateTodoDto } from '@todo-app/shared';
 
 const todosRoute: FastifyPluginAsync = async (fastify) => {
-  // GET /api/todos
-  fastify.get('/', async (_req, reply) => {
-    try {
-      const list = await fastify.pb.collection('todos').getFullList({
-        sort: '-created',
-      });
-      return reply.send(list);
-    } catch (err) {
-      fastify.log.error(err);
-      return reply.status(500).send({ error: 'Failed to fetch todos' });
-    }
+  // GET /api/todos — list todos for the authenticated user
+  fastify.get('/', async (req, reply) => {
+    const list = await req.pb
+      .collection('todos')
+      .getFullList({ sort: '-created' });
+    return reply.send(list);
   });
 
-  // POST /api/todos
-  fastify.post<{ Body: CreateTodoDto }>(
-    '/',
-    { schema: { body: createTodoSchema } },
-    async (req, reply) => {
-      try {
-        const record = await fastify.pb.collection('todos').create({
-          title: req.body.title,
-          completed: false,
-        });
-        return reply.status(201).send(record);
-      } catch (err) {
-        fastify.log.error(err);
-        return reply.status(500).send({ error: 'Failed to create todo' });
-      }
-    },
-  );
+  // POST /api/todos — create a todo for the authenticated user
+  fastify.post<{ Body: { title: string } }>('/', async (req, reply) => {
+    const { title } = req.body;
+    const record = await req.pb.collection('todos').create({
+      title,
+      completed: false,
+      userId: req.pb.authStore.record?.id,
+    });
+    return reply.status(201).send(record);
+  });
 
-  // PATCH /api/todos/:id
-  fastify.patch<{ Params: { id: string }; Body: UpdateTodoDto }>(
+  // PATCH /api/todos/:id — update a todo
+  fastify.patch<{ Params: { id: string }; Body: Record<string, unknown> }>(
     '/:id',
-    { schema: { body: updateTodoSchema } },
     async (req, reply) => {
-      try {
-        const record = await fastify.pb
-          .collection('todos')
-          .update(req.params.id, req.body);
-        return reply.send(record);
-      } catch (err) {
-        fastify.log.error(err);
-        return reply.status(500).send({ error: 'Failed to update todo' });
-      }
+      const { id } = req.params;
+      const record = await req.pb.collection('todos').update(id, req.body);
+      return reply.send(record);
     },
   );
 
-  // DELETE /api/todos/:id
+  // DELETE /api/todos/:id — delete a todo
   fastify.delete<{ Params: { id: string } }>('/:id', async (req, reply) => {
-    try {
-      await fastify.pb.collection('todos').delete(req.params.id);
-      return reply.status(204).send();
-    } catch (err) {
-      fastify.log.error(err);
-      return reply.status(500).send({ error: 'Failed to delete todo' });
-    }
+    const { id } = req.params;
+    await req.pb.collection('todos').delete(id);
+    return reply.status(204).send();
   });
 };
 

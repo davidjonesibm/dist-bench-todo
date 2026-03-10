@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useNotes } from '../../composables/use-notes'
 import { useTags } from '../../composables/use-tags'
 import type { Note } from '../../types/note.types'
@@ -12,17 +12,12 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
-const { notes, fetchNotes, subscribeToNotes, loading } = useNotes()
-const { tags, fetchTags } = useTags()
+const { notes, loading } = useNotes()
+const { tags } = useTags()
 
 const searchQuery = ref('')
 const selectedTagFilter = ref<string | null>(null)
 const selectedNoteId = ref<string | null>(null)
-
-onMounted(async () => {
-  await Promise.all([fetchNotes(), fetchTags()])
-  subscribeToNotes()
-})
 
 const filteredNotes = computed(() => {
   let filtered = notes.value

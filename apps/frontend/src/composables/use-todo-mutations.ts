@@ -1,4 +1,4 @@
-import { pb } from '../lib/pocketbase'
+import { apiFetch } from '../lib/api'
 import { useTodoStore } from '../stores/todo.store'
 import type { CreateTodoDto, Todo, UpdateTodoDto } from '@todo-app/shared'
 
@@ -11,16 +11,10 @@ export function useTodoMutations() {
   async function createTodo(dto: CreateTodoDto): Promise<void> {
     store.setError(null)
     try {
-      if (!pb.authStore.model?.id) {
-        throw new Error('User not authenticated')
-      }
-
-      const data = await pb.collection('todos').create<Todo>({
-        ...dto,
-        userId: pb.authStore.model.id,
-        completed: false,
+      const data = await apiFetch<Todo>('/api/todos', {
+        method: 'POST',
+        body: JSON.stringify({ ...dto, completed: false }),
       })
-
       store.upsert(data)
     } catch (err: any) {
       const errorMessage = err?.message || 'Failed to create todo'
@@ -36,7 +30,10 @@ export function useTodoMutations() {
     store.setError(null)
     try {
       const update: UpdateTodoDto = { completed: !todo.completed }
-      const data = await pb.collection('todos').update<Todo>(todo.id, update)
+      const data = await apiFetch<Todo>(`/api/todos/${todo.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(update),
+      })
       store.upsert(data)
     } catch (err: any) {
       const errorMessage = err?.message || 'Failed to update todo'
@@ -51,7 +48,7 @@ export function useTodoMutations() {
   async function deleteTodo(id: string): Promise<void> {
     store.setError(null)
     try {
-      await pb.collection('todos').delete(id)
+      await apiFetch<void>(`/api/todos/${id}`, { method: 'DELETE' })
       store.remove(id)
     } catch (err: any) {
       const errorMessage = err?.message || 'Failed to delete todo'

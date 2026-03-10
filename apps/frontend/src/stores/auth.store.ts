@@ -1,6 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { pb } from '../lib/pocketbase'
+import { apiFetch } from '../lib/api'
+
+function isTokenValid(token: string): boolean {
+  if (!token) return false
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.exp > Date.now() / 1000
+  } catch {
+    return false
+  }
+}
 import type {
   User,
   LoginCredentials,
@@ -19,13 +29,21 @@ export const useAuthStore = defineStore('auth', () => {
    * Call this on app startup to restore session
    */
   function initAuth() {
-    if (pb.authStore.isValid && pb.authStore.model) {
-      user.value = pb.authStore.model as unknown as User
-      token.value = pb.authStore.token
-    } else {
-      user.value = null
-      token.value = ''
+    try {
+      const raw = localStorage.getItem('pocketbase_auth')
+      if (raw) {
+        const { token: storedToken, model } = JSON.parse(raw)
+        if (storedToken && isTokenValid(storedToken) && model) {
+          user.value = model as User
+          token.value = storedToken
+          return
+        }
+      }
+    } catch {
+      // ignore malformed stored data
     }
+    user.value = null
+    token.value = ''
   }
 
   /**
@@ -33,12 +51,17 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function login(credentials: LoginCredentials): Promise<void> {
     try {
-      const authData = await pb
-        .collection('users')
-        .authWithPassword(credentials.email, credentials.password)
+      const { token: authToken, record } = await apiFetch<{ token: string; record: User }>(
+        '/api/auth/login',
+        {
+          method: 'POST',
+          body: JSON.stringify({ email: credentials.email, password: credentials.password }),
+        },
+      )
 
-      user.value = authData.record as unknown as User
-      token.value = pb.authStore.token
+      localStorage.setItem('pocketbase_auth', JSON.stringify({ token: authToken, model: record }))
+      user.value = record
+      token.value = authToken
     } catch (error: any) {
       console.error('Login error:', error)
       throw new Error(error?.message || 'Login failed. Please check your credentials.')
@@ -50,32 +73,24 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function register(credentials: RegisterCredentials): Promise<void> {
     try {
-      // Create the user account
-      const record = await pb.collection('users').create({
-        email: credentials.email,
-        password: credentials.password,
-        passwordConfirm: credentials.passwordConfirm,
-        name: credentials.name,
-        username: credentials.email.split('@')[0], // Generate username from email
-      })
+      const { token: authToken, record } = await apiFetch<{ token: string; record: User }>(
+        '/api/auth/register',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            email: credentials.email,
+            password: credentials.password,
+            passwordConfirm: credentials.passwordConfirm,
+            name: credentials.name,
+          }),
+        },
+      )
 
-      // Auto-login after registration
-      await login({
-        email: credentials.email,
-        password: credentials.password,
-      })
+      localStorage.setItem('pocketbase_auth', JSON.stringify({ token: authToken, model: record }))
+      user.value = record
+      token.value = authToken
     } catch (error: any) {
       console.error('Registration error:', error)
-
-      // Parse PocketBase validation errors
-      if (error?.data?.data) {
-        const errors = error.data.data
-        const errorMessages = Object.entries(errors)
-          .map(([field, data]: [string, any]) => `${field}: ${data.message}`)
-          .join(', ')
-        throw new Error(errorMessages)
-      }
-
       throw new Error(error?.message || 'Registration failed. Please try again.')
     }
   }
@@ -84,7 +99,7 @@ export const useAuthStore = defineStore('auth', () => {
    * Logout current user
    */
   function logout(): void {
-    pb.authStore.clear()
+    localStorage.removeItem('pocketbase_auth')
     user.value = null
     token.value = ''
   }
@@ -94,10 +109,14 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function refreshAuth(): Promise<void> {
     try {
-      if (pb.authStore.isValid) {
-        await pb.collection('users').authRefresh()
-        user.value = pb.authStore.model as unknown as User
-        token.value = pb.authStore.token
+      if (token.value && isTokenValid(token.value)) {
+        const { token: authToken, record } = await apiFetch<{ token: string; record: User }>(
+          '/api/auth/refresh',
+          { method: 'POST' },
+        )
+        localStorage.setItem('pocketbase_auth', JSON.stringify({ token: authToken, model: record }))
+        user.value = record
+        token.value = authToken
       }
     } catch (error) {
       console.error('Token refresh failed:', error)
@@ -124,8 +143,11 @@ export const useAuthStore = defineStore('auth', () => {
         formData.append('avatar', data.avatar)
       }
 
-      const updatedUser = await pb.collection('users').update(user.value.id, formData)
-      user.value = updatedUser as unknown as User
+      const updatedUser = await apiFetch<User>(`/api/auth/profile/${user.value.id}`, {
+        method: 'PUT',
+        body: formData,
+      })
+      user.value = updatedUser
     } catch (error: any) {
       console.error('Profile update error:', error)
       throw new Error(error?.message || 'Failed to update profile.')
@@ -139,7 +161,8 @@ export const useAuthStore = defineStore('auth', () => {
     if (!user.avatar) {
       return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=${size}&background=random`
     }
-    return pb.files.getUrl(user, user.avatar, { thumb: `${size}x${size}` })
+    const pbUrl = import.meta.env.VITE_POCKETBASE_URL || 'http://localhost:8090'
+    return `${pbUrl}/api/files/users/${user.id}/${user.avatar}?thumb=${size}x${size}`
   }
 
   return {

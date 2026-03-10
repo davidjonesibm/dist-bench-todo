@@ -1,5 +1,6 @@
-import { ref, onUnmounted } from 'vue'
-import { pb } from '../lib/pocketbase'
+import { ref } from 'vue'
+import { apiFetch } from '../lib/api'
+import { usePageRefetch } from './use-page-refetch'
 import type {
   CalendarEvent,
   CreateEventData,
@@ -23,8 +24,6 @@ export function useEvents() {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  let unsubscribe: (() => void) | null = null
-
   /**
    * Fetch all events for the current user
    */
@@ -33,11 +32,7 @@ export function useEvents() {
     error.value = null
 
     try {
-      const records = await pb.collection('events').getFullList<CalendarEvent>({
-        sort: '-created',
-        filter: `userId = "${pb.authStore.model?.id}"`,
-      })
-
+      const records = await apiFetch<CalendarEvent[]>('/api/events')
       events.value = records
       return { success: true, data: records }
     } catch (err: any) {
@@ -58,11 +53,13 @@ export function useEvents() {
     error.value = null
 
     try {
-      const record = await pb.collection('events').create<CalendarEvent>({
-        ...data,
-        start: toPocketBaseDate(data.start),
-        end: toPocketBaseDate(data.end),
-        userId: pb.authStore.model?.id,
+      const record = await apiFetch<CalendarEvent>('/api/events', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...data,
+          start: toPocketBaseDate(data.start),
+          end: toPocketBaseDate(data.end),
+        }),
       })
 
       events.value.unshift(record)
@@ -85,10 +82,13 @@ export function useEvents() {
     error.value = null
 
     try {
-      const record = await pb.collection('events').update<CalendarEvent>(id, {
-        ...data,
-        ...(data.start && { start: toPocketBaseDate(data.start) }),
-        ...(data.end && { end: toPocketBaseDate(data.end) }),
+      const record = await apiFetch<CalendarEvent>(`/api/events/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          ...data,
+          ...(data.start && { start: toPocketBaseDate(data.start) }),
+          ...(data.end && { end: toPocketBaseDate(data.end) }),
+        }),
       })
 
       const index = events.value.findIndex((e) => e.id === id)
@@ -115,7 +115,7 @@ export function useEvents() {
     error.value = null
 
     try {
-      await pb.collection('events').delete(id)
+      await apiFetch<void>(`/api/events/${id}`, { method: 'DELETE' })
 
       events.value = events.value.filter((e) => e.id !== id)
       return { success: true }
@@ -129,51 +129,7 @@ export function useEvents() {
     }
   }
 
-  /**
-   * Subscribe to real-time event updates
-   */
-  async function subscribeToEvents() {
-    if (!pb.authStore.model?.id) {
-      console.warn('Cannot subscribe to events: user not authenticated')
-      return
-    }
-
-    unsubscribe = await pb.collection('events').subscribe<CalendarEvent>('*', (e) => {
-      // Only process events for the current user
-      if (e.record?.userId !== pb.authStore.model?.id) {
-        return
-      }
-
-      if (e.action === 'create') {
-        const exists = events.value.some((evt) => evt.id === e.record.id)
-        if (!exists) {
-          events.value.unshift(e.record)
-        }
-      } else if (e.action === 'update') {
-        const index = events.value.findIndex((evt) => evt.id === e.record.id)
-        if (index !== -1) {
-          events.value[index] = e.record
-        }
-      } else if (e.action === 'delete') {
-        events.value = events.value.filter((evt) => evt.id !== e.record.id)
-      }
-    })
-  }
-
-  /**
-   * Unsubscribe from real-time updates
-   */
-  function unsubscribeFromEvents() {
-    if (unsubscribe) {
-      unsubscribe()
-      unsubscribe = null
-    }
-  }
-
-  // Cleanup on unmount
-  onUnmounted(() => {
-    unsubscribeFromEvents()
-  })
+  usePageRefetch(fetchEvents)
 
   return {
     events,
@@ -183,7 +139,5 @@ export function useEvents() {
     createEvent,
     updateEvent,
     deleteEvent,
-    subscribeToEvents,
-    unsubscribeFromEvents,
   }
 }

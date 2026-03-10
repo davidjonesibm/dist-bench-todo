@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useEvents } from '../composables/use-events'
 import CalendarView from '../components/calendar/calendar-view.vue'
 import EventForm from '../components/calendar/event-form.vue'
@@ -11,11 +11,9 @@ const {
   events,
   loading,
   error,
-  fetchEvents,
   createEvent,
   updateEvent,
   deleteEvent,
-  subscribeToEvents,
 } = useEvents()
 
 // Modal states
@@ -24,11 +22,6 @@ const showEventDetail = ref(false)
 const selectedEvent = ref<CalendarEvent | undefined>(undefined)
 const formLoading = ref(false)
 const formError = ref<string | null>(null)
-
-onMounted(async () => {
-  await fetchEvents()
-  subscribeToEvents()
-})
 
 function handleCreateEvent() {
   selectedEvent.value = undefined

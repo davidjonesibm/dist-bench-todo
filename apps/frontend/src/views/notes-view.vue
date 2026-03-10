@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useNotes } from '../composables/use-notes'
 import type { Note } from '../types/note.types'
 import NoteList from '../components/notes/note-list.vue'
@@ -15,7 +15,6 @@ const {
   togglePin,
   autoSaveNote,
   cancelAutoSave,
-  subscribeToNotes,
 } = useNotes()
 
 const selectedNote = ref<Note | null>(null)
@@ -25,10 +24,6 @@ const noteTags = ref<string[]>([])
 const isEditMode = ref(true)
 const showTagsPanel = ref(false)
 const isCreatingNew = ref(false)
-
-onMounted(() => {
-  subscribeToNotes()
-})
 
 const hasUnsavedChanges = computed(() => {
   if (!selectedNote.value && !isCreatingNew.value) return false

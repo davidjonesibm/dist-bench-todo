@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useTags } from '../../composables/use-tags'
 import type { Tag } from '../../types/tag.types'
 import TagBadge from './tag-badge.vue'
@@ -15,16 +15,12 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const { tags, fetchTags, createTag } = useTags()
+const { tags, createTag } = useTags()
 
 const showDropdown = ref(false)
 const searchQuery = ref('')
 const newTagName = ref('')
 const newTagColor = ref('#3B82F6') // Default blue color
-
-onMounted(async () => {
-  await fetchTags()
-})
 
 const selectedTags = computed(() => {
   return tags.value.filter((tag) => props.modelValue.includes(tag.id))

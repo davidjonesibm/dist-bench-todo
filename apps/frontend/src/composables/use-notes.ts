@@ -1,5 +1,6 @@
 import { ref, onUnmounted } from 'vue'
-import { pb } from '../lib/pocketbase'
+import { apiFetch } from '../lib/api'
+import { usePageRefetch } from './use-page-refetch'
 import type {
   Note,
   CreateNoteData,
@@ -13,7 +14,6 @@ export function useNotes() {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  let unsubscribe: (() => void) | null = null
   let autoSaveTimer: number | null = null
 
   /**
@@ -24,12 +24,7 @@ export function useNotes() {
     error.value = null
 
     try {
-      const records = await pb.collection('notes').getFullList<Note>({
-        sort: '-isPinned,-updated',
-        filter: `userId = "${pb.authStore.model?.id}"`,
-        expand: 'tags',
-      })
-
+      const records = await apiFetch<Note[]>('/api/notes')
       notes.value = records
       return { success: true, data: records }
     } catch (err: any) {
@@ -50,11 +45,13 @@ export function useNotes() {
     error.value = null
 
     try {
-      const record = await pb.collection('notes').create<Note>({
-        ...data,
-        userId: pb.authStore.model?.id,
-        isPinned: data.isPinned ?? false,
-        content: data.content ?? '',
+      const record = await apiFetch<Note>('/api/notes', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...data,
+          isPinned: data.isPinned ?? false,
+          content: data.content ?? '',
+        }),
       })
 
       notes.value.unshift(record)
@@ -76,7 +73,10 @@ export function useNotes() {
     error.value = null
 
     try {
-      const record = await pb.collection('notes').update<Note>(id, data)
+      const record = await apiFetch<Note>(`/api/notes/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      })
 
       const index = notes.value.findIndex((n) => n.id === id)
       if (index !== -1) {
@@ -107,7 +107,7 @@ export function useNotes() {
     error.value = null
 
     try {
-      await pb.collection('notes').delete(id)
+      await apiFetch<void>(`/api/notes/${id}`, { method: 'DELETE' })
 
       notes.value = notes.value.filter((n) => n.id !== id)
       return { success: true }
@@ -169,57 +169,9 @@ export function useNotes() {
     }
   }
 
-  /**
-   * Subscribe to real-time note updates
-   */
-  async function subscribeToNotes() {
-    if (!pb.authStore.model?.id) {
-      console.warn('Cannot subscribe to notes: user not authenticated')
-      return
-    }
+  usePageRefetch(fetchNotes)
 
-    unsubscribe = await pb.collection('notes').subscribe<Note>('*', (e) => {
-      // Only process notes for the current user
-      if (e.record?.userId !== pb.authStore.model?.id) {
-        return
-      }
-
-      if (e.action === 'create') {
-        const exists = notes.value.some((note) => note.id === e.record.id)
-        if (!exists) {
-          notes.value.unshift(e.record)
-        }
-      } else if (e.action === 'update') {
-        const index = notes.value.findIndex((note) => note.id === e.record.id)
-        if (index !== -1) {
-          notes.value[index] = e.record
-          // Re-sort notes
-          notes.value.sort((a, b) => {
-            if (a.isPinned !== b.isPinned) {
-              return a.isPinned ? -1 : 1
-            }
-            return new Date(b.updated).getTime() - new Date(a.updated).getTime()
-          })
-        }
-      } else if (e.action === 'delete') {
-        notes.value = notes.value.filter((note) => note.id !== e.record.id)
-      }
-    })
-  }
-
-  /**
-   * Unsubscribe from real-time updates
-   */
-  function unsubscribeFromNotes() {
-    if (unsubscribe) {
-      unsubscribe()
-      unsubscribe = null
-    }
-  }
-
-  // Cleanup on unmount
   onUnmounted(() => {
-    unsubscribeFromNotes()
     cancelAutoSave()
   })
 
@@ -234,7 +186,5 @@ export function useNotes() {
     togglePin,
     autoSaveNote,
     cancelAutoSave,
-    subscribeToNotes,
-    unsubscribeFromNotes,
   }
 }
