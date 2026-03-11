@@ -1,17 +1,17 @@
 export const createTodoSchema = {
-  type: 'object',
-  required: ['title'],
+  type: "object",
+  required: ["title"],
   properties: {
-    title: { type: 'string', minLength: 1 },
+    title: { type: "string", minLength: 1 },
   },
   additionalProperties: false,
 };
 
 export const updateTodoSchema = {
-  type: 'object',
+  type: "object",
   properties: {
-    title: { type: 'string', minLength: 1 },
-    completed: { type: 'boolean' },
+    title: { type: "string", minLength: 1 },
+    completed: { type: "boolean" },
   },
   additionalProperties: false,
 };

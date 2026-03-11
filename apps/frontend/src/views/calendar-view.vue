@@ -7,14 +7,7 @@ import EventDetail from '../components/calendar/event-detail.vue'
 import ErrorAlert from '../components/ui/error-alert.vue'
 import type { CalendarEvent, CreateEventData, ScheduleXEvent } from '../types/calendar.types'
 
-const {
-  events,
-  loading,
-  error,
-  createEvent,
-  updateEvent,
-  deleteEvent,
-} = useEvents()
+const { events, loading, error, createEvent, updateEvent, deleteEvent } = useEvents()
 
 // Modal states
 const showEventForm = ref(false)

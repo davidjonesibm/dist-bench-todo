@@ -8,14 +8,7 @@ import NoteViewer from '../components/notes/note-viewer.vue'
 import NoteToolbar from '../components/notes/note-toolbar.vue'
 import TagInput from '../components/tags/tag-input.vue'
 
-const {
-  createNote,
-  updateNote,
-  deleteNote,
-  togglePin,
-  autoSaveNote,
-  cancelAutoSave,
-} = useNotes()
+const { createNote, updateNote, deleteNote, togglePin, autoSaveNote, cancelAutoSave } = useNotes()
 
 const selectedNote = ref<Note | null>(null)
 const noteTitle = ref('')
