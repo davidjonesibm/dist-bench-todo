@@ -3,7 +3,8 @@ description: 'Expert at designing and creating VS Code custom agents with optima
 name: Custom Agent Foundry
 argument-hint: Describe the agent role, purpose, and required capabilities
 model: Claude Sonnet 4.5
-tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'agent', 'github/*', 'todo']
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'agent', 'todo']
+agents: ['Context7-Expert']
 ---
 
 # Custom Agent Foundry - Expert Agent Designer

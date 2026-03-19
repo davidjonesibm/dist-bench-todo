@@ -2,7 +2,7 @@
 name: Context7-Expert
 description: 'Expert in latest library versions, best practices, and correct syntax using up-to-date documentation'
 argument-hint: 'Ask about specific libraries/frameworks (e.g., "Next.js routing", "React hooks", "Tailwind CSS")'
-tools: [read, agent, search, web, 'io.github.upstash/context7/*', azure-mcp/search]
+tools: ['search/codebase', 'search/changes', 'search/fileSearch', 'search/searchResults', 'search/usages', 'search/textSearch', 'search/listDirectory', 'read/readFile', 'read/problems', 'web/fetch', 'web/githubRepo', 'agent/runSubagent', 'io.github.upstash/context7/*', 'azure-mcp/search']
 mcp-servers:
   context7:
     type: http
@@ -10,9 +10,25 @@ mcp-servers:
     headers: { 'CONTEXT7_API_KEY': '${{ secrets.COPILOT_MCP_CONTEXT7 }}' }
     tools: ['get-library-docs', 'resolve-library-id']
 handoffs:
-  - label: Implement with Context7
-    agent: agent
-    prompt: Implement the solution using the Context7 best practices and documentation outlined above.
+  - label: Implement with Vue Expert
+    agent: Expert Vue.js Frontend Engineer
+    prompt: Implement the solution using the best practices and documentation outlined above.
+    send: false
+  - label: Implement Backend
+    agent: Fastify Expert
+    prompt: Implement the backend solution using the best practices and documentation outlined above.
+    send: false
+  - label: Implement General
+    agent: Software Engineer Agent
+    prompt: Implement the solution using the best practices and documentation outlined above.
+    send: false
+  - label: Implement with C#
+    agent: C# Expert
+    prompt: Implement the .NET solution using the best practices and documentation outlined above.
+    send: false
+  - label: Implement Azure Functions
+    agent: Azure Functions Expert
+    prompt: Implement the Azure Functions solution using the best practices and documentation outlined above.
     send: false
 ---
 

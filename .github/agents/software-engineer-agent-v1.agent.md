@@ -1,7 +1,20 @@
 ---
 description: 'Expert-level software engineering agent. Deliver production-ready, maintainable code. Execute systematically and specification-driven. Document comprehensively. Operate autonomously and adaptively.'
 name: 'Software Engineer Agent'
-tools: ['vscode/installExtension','vscode/newWorkspace','vscode/openSimpleBrowser','vscode/runCommand','vscode/askQuestions','vscode/vscodeAPI','vscode/extensions','execute/testFailure','execute/getTerminalOutput','execute/awaitTerminal','execute/createAndRunTask','execute/runInTerminal','read/problems','read/readFile','read/terminalSelection','read/terminalLastCommand','edit/createDirectory','edit/createFile','edit/editFiles','search/changes','search/codebase','search/fileSearch','search/listDirectory','search/searchResults','search/textSearch','search/usages','web/fetch','web/githubRepo']
+tools: ['search/codebase', 'search/changes', 'search/fileSearch', 'search/searchResults', 'search/usages', 'search/textSearch', 'search/listDirectory', 'edit/editFiles', 'edit/createFile', 'edit/createDirectory', 'read/readFile', 'read/problems', 'read/terminalLastCommand', 'read/terminalSelection', 'execute/runInTerminal', 'execute/getTerminalOutput', 'execute/createAndRunTask', 'execute/awaitTerminal', 'execute/testFailure', 'vscode/extensions', 'vscode/getProjectSetupInfo', 'vscode/runCommand', 'vscode/vscodeAPI', 'web/fetch', 'web/githubRepo', 'agent/runSubagent']
+handoffs:
+  - label: Research with Context7
+    agent: Context7-Expert
+    prompt: Research the following library/framework question using up-to-date documentation.
+    send: false
+  - label: Review Implementation
+    agent: Code Reviewer
+    prompt: Review the implementation for correctness, security, performance, and style consistency.
+    send: false
+  - label: Generate Tests
+    agent: Test Writer
+    prompt: Generate tests for the implementation.
+    send: false
 ---
 
 # Software Engineer Agent v1

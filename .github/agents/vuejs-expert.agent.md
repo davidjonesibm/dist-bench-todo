@@ -2,7 +2,20 @@
 description: 'Expert Vue.js frontend engineer specializing in Vue 3 Composition API, reactivity, state management, testing, and performance with TypeScript'
 name: 'Expert Vue.js Frontend Engineer'
 model: 'Claude Sonnet 4.5'
-tools: ["search/changes", "search/codebase", "edit/editFiles", "vscode/extensions", "web/fetch", "web/githubRepo", "vscode/getProjectSetupInfo", "vscode/installExtension", "vscode/newWorkspace", "vscode/runCommand", "vscode/openSimpleBrowser", "read/problems", "execute/getTerminalOutput", "execute/runInTerminal", "read/terminalLastCommand", "read/terminalSelection", "execute/createAndRunTask", "azure-mcp/search", "search/searchResults", "read/terminalLastCommand", "read/terminalSelection", "execute/testFailure", "search/usages", "vscode/vscodeAPI"]
+tools: ['search/codebase', 'search/changes', 'search/fileSearch', 'search/searchResults', 'search/usages', 'search/textSearch', 'search/listDirectory', 'edit/editFiles', 'edit/createFile', 'edit/createDirectory', 'read/readFile', 'read/problems', 'read/terminalLastCommand', 'read/terminalSelection', 'execute/runInTerminal', 'execute/getTerminalOutput', 'execute/createAndRunTask', 'execute/awaitTerminal', 'execute/testFailure', 'vscode/extensions', 'vscode/getProjectSetupInfo', 'vscode/runCommand', 'vscode/vscodeAPI', 'web/fetch', 'web/githubRepo', 'agent/runSubagent']
+handoffs:
+  - label: Research with Context7
+    agent: Context7-Expert
+    prompt: Research the following Vue.js library/framework question using up-to-date documentation.
+    send: false
+  - label: Review Implementation
+    agent: Code Reviewer
+    prompt: Review the Vue.js implementation for correctness, security, performance, and style consistency.
+    send: false
+  - label: Generate Tests
+    agent: Test Writer
+    prompt: Generate Vitest tests for the Vue.js implementation including component tests and composable tests.
+    send: false
 ---
 
 # Expert Vue.js Frontend Engineer
